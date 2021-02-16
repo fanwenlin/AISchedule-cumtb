@@ -1,6 +1,36 @@
+function getSemesterId(dom,default_value = 121) {
 
+    let ret = default_value;
+    try{
+        console.log("debug")
+        optionList = dom.querySelector("#allSemesters").childNodes;
+
+        console.log(optionList);
+        for(x in optionList) {
+            x = optionList[x]
+            console.log(x)
+            try{
+                if(x.getAttribute("selected") === "selected"){
+                    console.log(x.getAttribute("value"));
+                    ret = parseInt(x.getAttribute("value"))
+                }
+            }
+            catch{
+                continue;
+            }
+        }
+    }
+    catch(error){
+        console.info(error);
+        return ret;
+    }
+    return ret;
+}
 function scheduleHtmlProvider(iframeContent = "", frameContent = "", dom = document) {
-    let message = '';
+    let message = `获取课表的方式改为模拟HTTP请求，登入系统后就可以一键导入
+    update: 支持了对学期变化的跟踪\n
+（代码已经上传至github，欢迎一同维护
+https://github.com/fanwenlin/AISchedule-cumtb）`;
     if(message.length > 0 ) alert(message);
     let xmlhttp=null;
     let lessonIds = [];
@@ -10,6 +40,8 @@ function scheduleHtmlProvider(iframeContent = "", frameContent = "", dom = docum
     let time2sectionid = {};
     let sections = {};
     let ret = null;
+    let semesterId = 121;
+
     if (window.XMLHttpRequest) {// code for all new browsers
         xmlhttp = new XMLHttpRequest();
     }
@@ -29,7 +61,19 @@ function scheduleHtmlProvider(iframeContent = "", frameContent = "", dom = docum
         //         }
         //     }
         // };
-        url = "https://jwxt.cumtb.edu.cn/student/for-std/course-table/get-data?bizTypeId=2&semesterId=101";
+        semesterId = getSemesterId(dom,-1);
+
+        console.log("SemesterId:" + semesterId);
+        url = "https://jwxt.cumtb.edu.cn/student/for-std/course-table"
+        if(semesterId==-1) {
+            node = dom.createElement("html");
+            xmlhttp.open("GET",url,false);
+            xmlhttp.send(null);
+            node.innerHTML = xmlhttp.responseText
+            semesterId = getSemesterId(node,121)
+        }
+        console.log("SemesterId:" + semesterId);
+        url = "https://jwxt.cumtb.edu.cn/student/for-std/course-table/get-data?bizTypeId=2&semesterId="+semesterId;
         xmlhttp.open("GET", url, false);
         xmlhttp.send(null);
         resp = JSON.parse(xmlhttp.responseText);
@@ -61,9 +105,9 @@ function scheduleHtmlProvider(iframeContent = "", frameContent = "", dom = docum
             let index = courseunit['indexNo'];
             let ST = courseunit['startTime'], ET = courseunit['endTime'];
             time2sectionid[ST] = index;
-            ST = (Math.floor(ST/100).toString() < 10 ? '0'+Math.floor(ST/100).toString() : Math.floor(ST/100).toString()) + ':' 
+            ST = (Math.floor(ST/100).toString() < 10 ? '0'+Math.floor(ST/100).toString() : Math.floor(ST/100).toString()) + ':'
                 + (ST%100 < 10 ? '0' + (ST%100).toString() : (ST%100).toString());
-            ET = (Math.floor(ET/100).toString() < 10 ? '0' + Math.floor(ET/100).toString() : Math.floor(ET/100).toString()) + ':' 
+            ET = (Math.floor(ET/100).toString() < 10 ? '0' + Math.floor(ET/100).toString() : Math.floor(ET/100).toString()) + ':'
                 + (ET%100 < 10 ? '0' + (ET%100).toString() : (ET%100).toString());
             sections[index] = {
                 "section": index,
